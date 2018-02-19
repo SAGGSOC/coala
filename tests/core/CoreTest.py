@@ -55,6 +55,20 @@ class MultiTaskBear(Bear):
         return (((i,), {}) for i in range(self.tasks_count))
 
 
+class CustomTaskBear(Bear):
+
+    def __init__(self, section, file_dict, tasks=()):
+        super().__init__(section, file_dict)
+
+        self.tasks = tasks
+
+    def analyze(self, *args):
+        return args
+
+    def generate_tasks(self):
+        return ((task, {}) for task in self.tasks)
+
+
 class BearA(TestBearBase):
     pass
 
@@ -668,3 +682,113 @@ class CoreOnSpecificExecutorTest(CoreTestBase):
             with self.assertRaisesRegex(
                     RuntimeError, 'cannot schedule new futures after shutdown'):
                 executor.submit(lambda: None)
+
+
+class CoreCacheTest(CoreTestBase):
+    def setUp(self):
+        # Standard mocks only work within the same process, so we have to use
+        # Python threads for testing.
+        self.executor = ThreadPoolExecutor, tuple(), dict(max_workers=1)
+
+    def test_no_cache(self):
+        # Two runs without using the cache shall always run analyze() again.
+        section = Section('test-section')
+        filedict = {}
+
+        task_args = 3, 4, 5
+        bear = CustomTaskBear(section, filedict, tasks=[task_args])
+
+        with unittest.mock.patch.object(bear, 'analyze', wraps=bear.analyze) as mock:
+            # By default, omitting the cache parameter shall mean "no cache".
+            results = self.execute_run({bear})
+            mock.assert_called_once_with(*task_args)
+            self.assertEqual(results, list(task_args))
+
+            mock.reset_mock()
+
+            results = self.execute_run({bear})
+            mock.assert_called_once_with(*task_args)
+            self.assertEqual(results, list(task_args))
+
+            mock.reset_mock()
+
+            # Passing None for cache shall disable it too explicitly.
+            results = self.execute_run({bear}, None)
+            mock.assert_called_once_with(*task_args)
+            self.assertEqual(results, list(task_args))
+
+    def test_cache(self):
+        section = Section('test-section')
+        filedict = {}
+
+        cache = {}
+
+        with unittest.mock.patch.object(bear, 'analyze', wraps=bear.analyze) as mock:
+            task_args = 10, 11, 12
+            bear = CustomTaskBear(section, filedict, tasks=[task_args])
+
+            # First time we have a cache miss.
+            results = self.execute_run({bear}, cache)
+            mock.assert_called_once_with(*task_args)
+            self.assertEqual(results, list(task_args))
+            self.assertEqual(len(cache), 1)
+            self.assertEqual(next(iter(cache.keys())), CustomTaskBear)
+            self.assertEqual(len(next(iter(cache.values()))), 1)
+
+            # All following times we have a cache hit (we don't modify the
+            # cache in between).
+            for i in range(3):
+                mock.reset_mock()
+
+                results = self.execute_run({bear}, cache)
+                mock.assert_not_called()
+                self.assertEqual(results, list(task_args))
+                self.assertEqual(len(cache), 1)
+                self.assertIn(CustomTaskBear, cache)
+                self.assertEqual(len(next(iter(cache.values()))), 1)
+
+            # Invocation with different args should add another cache entry,
+            # and invoke analyze() again because those weren't cached before.
+            task_args = 500, 11, 12
+            bear = CustomTaskBear(section, filedict, tasks=[task_args])
+
+            results = self.execute_run({bear}, cache)
+            mock.assert_called_once_with(*task_args)
+            self.assertEqual(results, list(task_args))
+            self.assertEqual(len(cache), 1)
+            self.assertIn(CustomTaskBear, cache)
+            self.assertEqual(len(next(iter(cache.values()))), 2)
+
+            mock.reset_mock()
+
+            results = self.execute_run({bear}, cache)
+            mock.assert_not_called()
+            self.assertEqual(results, list(task_args))
+            self.assertEqual(len(cache), 1)
+            self.assertIn(CustomTaskBear, cache)
+            self.assertEqual(len(next(iter(cache.values()))), 2)
+
+    def test_existing_cache_with_unrelated_data(self):
+        section = Section('test-section')
+        filedict = {}
+
+        # Start with some unrelated cache values. Those are ignored as they are
+        # never hit during a cache lookup.
+        cache = {CustomTaskBear: {b'123456': [100, 101, 102]}}
+
+        task_args = -1, -2, -3
+        bear = CustomTaskBear(section, filedict, tasks=[task_args])
+
+        with unittest.mock.patch.object(bear, 'analyze', wraps=bear.analyze) as mock:
+            # First time we have a cache miss.
+            results = self.execute_run({bear})
+            mock.assert_called_once_with(*task_args)
+            self.assertEqual(results, list(task_args))
+            self.assertEqual(len(cache), 1)
+            self.assertIn(CustomTaskBear, cache)
+
+            cache_values = next(iter(cache.values()))
+            self.assertEqual(len(cache_values), 2)
+            # The unrelated data is left untouched.
+            self.assertIn(b'123456', cache_values)
+            self.assertEqual(cache_values[b'123456'], [100, 101, 102])

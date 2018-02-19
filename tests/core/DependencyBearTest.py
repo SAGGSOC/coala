@@ -72,9 +72,9 @@ class DependencyBearTest(CoreTestBase):
         if file_dict is None:
             file_dict = {}
 
-        uut = bear_type(section, file_dict, cache)
+        uut = bear_type(section, file_dict)
 
-        results = self.execute_run({uut})
+        results = self.execute_run({uut}, cache)
 
         self.assertEqual(sorted(expected), sorted(results))
 
