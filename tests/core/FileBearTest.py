@@ -147,8 +147,8 @@ class FileBearOnThreadPoolExecutorTest(FileBearTest):
                                     expected=list(filedict1.keys()))
 
             mock.assert_called_once_with(ANY, *next(iter(filedict1.items())))
-            assert len(cache) == 1
-            assert len(next(iter(cache.values()))) == 1
+            self.assertEqual(len(cache), 1)
+            self.assertEqual(len(next(iter(cache.values()))), 1)
 
             mock.reset_mock()
 
@@ -158,11 +158,11 @@ class FileBearOnThreadPoolExecutorTest(FileBearTest):
                                     cache=cache,
                                     expected=list(filedict2.keys()))
 
-            assert mock.call_count == 2
+            self.assertEqual(mock.call_count, 2)
             for filename, file in filedict2.items():
                 mock.assert_any_call(ANY, filename, file)
-            assert len(cache) == 1
-            assert len(next(iter(cache.values()))) == 3
+            self.assertEqual(len(cache), 1)
+            self.assertEqual(len(next(iter(cache.values()))), 3)
 
             mock.reset_mock()
 
@@ -173,5 +173,5 @@ class FileBearOnThreadPoolExecutorTest(FileBearTest):
                                     expected=list(filedict3.keys()))
 
             mock.assert_called_once_with(ANY, 'file2.txt', [])
-            assert len(cache) == 1
-            assert len(next(iter(cache.values()))) == 4
+            self.assertEqual(len(cache), 1)
+            self.assertEqual(len(next(iter(cache.values()))), 4)

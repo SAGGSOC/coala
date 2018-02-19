@@ -698,7 +698,8 @@ class CoreCacheTest(CoreTestBase):
         task_args = 3, 4, 5
         bear = CustomTaskBear(section, filedict, tasks=[task_args])
 
-        with unittest.mock.patch.object(bear, 'analyze', wraps=bear.analyze) as mock:
+        with unittest.mock.patch.object(bear, 'analyze',
+                                        wraps=bear.analyze) as mock:
             # By default, omitting the cache parameter shall mean "no cache".
             results = self.execute_run({bear})
             mock.assert_called_once_with(*task_args)
@@ -725,8 +726,9 @@ class CoreCacheTest(CoreTestBase):
 
         task_args = 10, 11, 12
         bear = CustomTaskBear(section, filedict, tasks=[task_args])
-        with unittest.mock.patch.object(bear, 'analyze', wraps=bear.analyze) as mock:
 
+        with unittest.mock.patch.object(bear, 'analyze',
+                                        wraps=bear.analyze) as mock:
             # First time we have a cache miss.
             results = self.execute_run({bear}, cache)
             mock.assert_called_once_with(*task_args)
@@ -780,7 +782,8 @@ class CoreCacheTest(CoreTestBase):
         task_args = -1, -2, -3
         bear = CustomTaskBear(section, filedict, tasks=[task_args])
 
-        with unittest.mock.patch.object(bear, 'analyze', wraps=bear.analyze) as mock:
+        with unittest.mock.patch.object(bear, 'analyze',
+                                        wraps=bear.analyze) as mock:
             # First time we have a cache miss.
             results = self.execute_run({bear}, cache)
             mock.assert_called_once_with(*task_args)

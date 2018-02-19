@@ -165,8 +165,8 @@ class ProjectBearOnThreadPoolExecutorTest(ProjectBearTest):
                                     cache=cache,
                                     expected=expected_results1)
             mock.assert_called_once_with(ANY, filedict1)
-            assert len(cache) == 1
-            assert len(next(iter(cache.values()))) == 1
+            self.assertEqual(len(cache), 1)
+            self.assertEqual(len(next(iter(cache.values()))), 1)
 
             mock.reset_mock()
 
@@ -179,9 +179,9 @@ class ProjectBearOnThreadPoolExecutorTest(ProjectBearTest):
             # is not available. The fix for this bug was not backported to
             # Python 3.5 or earlier, so to be compatible with 3.4 we have to
             # manually assert.
-            assert not mock.called
-            assert len(cache) == 1
-            assert len(next(iter(cache.values()))) == 1
+            self.assertFalse(mock.called)
+            self.assertEqual(len(cache), 1)
+            self.assertEqual(len(next(iter(cache.values()))), 1)
 
             self.assertResultsEqual(TestProjectBear,
                                     section=section,
@@ -190,5 +190,5 @@ class ProjectBearOnThreadPoolExecutorTest(ProjectBearTest):
                                     expected=expected_results2)
 
             mock.assert_called_once_with(ANY, filedict2)
-            assert len(cache) == 1
-            assert len(next(iter(cache.values()))) == 2
+            self.assertEqual(len(cache), 1)
+            self.assertEqual(len(next(iter(cache.values()))), 2)

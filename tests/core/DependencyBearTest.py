@@ -231,9 +231,6 @@ class DependencyBearOnThreadPoolExecutorTest(DependencyBearTest):
         filedict3 = {'file.txt': ['first-line\n'], 'file2.txt': []}
         cache = {}
 
-        # GlobalBear returns 1 result -> one task for DependencyBear
-        #
-
         patch2 = patch.object(
             TestBearDependentOnProjectBear, 'analyze',
             autospec=True,
@@ -244,28 +241,31 @@ class DependencyBearOnThreadPoolExecutorTest(DependencyBearTest):
             side_effect=TestProjectBear.analyze)
 
         with patch1 as dependency_mock, patch2 as dependant_mock:
-
-            self.assertResultsEqual(TestBearDependentOnProjectBear,
-                                    section=section,
-                                    file_dict=filedict1,
-                                    cache=cache,
-                                    expected=['file.txt(0)',
-                                              'TestProjectBear - file.txt(0)'])
+            # First time we have a cache miss.
+            self.assertResultsEqual(
+                TestBearDependentOnProjectBear,
+                section=section,
+                file_dict=filedict1,
+                cache=cache,
+                expected=['file.txt(0)', 'TestProjectBear - file.txt(0)'])
 
             dependency_mock.assert_called_once_with(ANY, filedict1)
-            dependant_mock.assert_called_once_with(ANY, TestProjectBear, 'file.txt(0)')
-            assert len(cache) == 2
+            dependant_mock.assert_called_once_with(
+                ANY, TestProjectBear, 'file.txt(0)')
+            self.assertEqual(len(cache), 2)
 
             dependency_mock.reset_mock()
             dependant_mock.reset_mock()
 
-            self.assertResultsEqual(TestBearDependentOnProjectBear,
-                                    section=section,
-                                    file_dict=filedict1,
-                                    cache=cache,
-                                    expected=['file.txt(0)',
-                                              'TestProjectBear - file.txt(0)'])
+            # Then we get consecutive cache hits.
+            for i in range(3):
+                self.assertResultsEqual(
+                    TestBearDependentOnProjectBear,
+                    section=section,
+                    file_dict=filedict1,
+                    cache=cache,
+                    expected=['file.txt(0)', 'TestProjectBear - file.txt(0)'])
 
-            assert dependency_mock.assert_not_called()
-            assert dependant_mock.assert_not_called()
-            assert len(cache) == 2
+                self.assertFalse(dependency_mock.called)
+                self.assertFalse(dependant_mock.called)
+                self.assertEqual(len(cache), 2)
