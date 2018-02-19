@@ -782,7 +782,7 @@ class CoreCacheTest(CoreTestBase):
 
         with unittest.mock.patch.object(bear, 'analyze', wraps=bear.analyze) as mock:
             # First time we have a cache miss.
-            results = self.execute_run({bear})
+            results = self.execute_run({bear}, cache)
             mock.assert_called_once_with(*task_args)
             self.assertEqual(results, list(task_args))
             self.assertEqual(len(cache), 1)
