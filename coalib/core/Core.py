@@ -336,8 +336,11 @@ class Session:
             future = self.event_loop.run_in_executor(
                 self.executor, bear.execute_task,
                 bear_args, bear_kwargs)
+            safe_future = asyncio.run_coroutine_threadsafe(
+                asyncio.wait_for(future, None, loop=self.event_loop),
+                loop=self.event_loop)
 
-            results = future.result()
+            results = safe_future.result()
             bear_cache[fingerprint] = results
 
         return results

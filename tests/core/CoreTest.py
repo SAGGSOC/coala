@@ -723,9 +723,9 @@ class CoreCacheTest(CoreTestBase):
 
         cache = {}
 
+        task_args = 10, 11, 12
+        bear = CustomTaskBear(section, filedict, tasks=[task_args])
         with unittest.mock.patch.object(bear, 'analyze', wraps=bear.analyze) as mock:
-            task_args = 10, 11, 12
-            bear = CustomTaskBear(section, filedict, tasks=[task_args])
 
             # First time we have a cache miss.
             results = self.execute_run({bear}, cache)
@@ -747,11 +747,12 @@ class CoreCacheTest(CoreTestBase):
                 self.assertIn(CustomTaskBear, cache)
                 self.assertEqual(len(next(iter(cache.values()))), 1)
 
+        task_args = 500, 11, 12
+        bear = CustomTaskBear(section, filedict, tasks=[task_args])
+        with unittest.mock.patch.object(bear, 'analyze',
+                                        wraps=bear.analyze) as mock:
             # Invocation with different args should add another cache entry,
             # and invoke analyze() again because those weren't cached before.
-            task_args = 500, 11, 12
-            bear = CustomTaskBear(section, filedict, tasks=[task_args])
-
             results = self.execute_run({bear}, cache)
             mock.assert_called_once_with(*task_args)
             self.assertEqual(results, list(task_args))
