@@ -55,7 +55,7 @@ class MultiTaskBear(Bear):
         return (((i,), {}) for i in range(self.tasks_count))
 
 
-class CustomTaskBear(Bear):
+class CustomTasksBear(Bear):
 
     def __init__(self, section, file_dict, tasks=()):
         super().__init__(section, file_dict)
@@ -696,7 +696,7 @@ class CoreCacheTest(CoreTestBase):
         filedict = {}
 
         task_args = 3, 4, 5
-        bear = CustomTaskBear(section, filedict, tasks=[task_args])
+        bear = CustomTasksBear(section, filedict, tasks=[task_args])
 
         with unittest.mock.patch.object(bear, 'analyze',
                                         wraps=bear.analyze) as mock:
@@ -725,7 +725,7 @@ class CoreCacheTest(CoreTestBase):
         cache = {}
 
         task_args = 10, 11, 12
-        bear = CustomTaskBear(section, filedict, tasks=[task_args])
+        bear = CustomTasksBear(section, filedict, tasks=[task_args])
 
         with unittest.mock.patch.object(bear, 'analyze',
                                         wraps=bear.analyze) as mock:
@@ -734,7 +734,7 @@ class CoreCacheTest(CoreTestBase):
             mock.assert_called_once_with(*task_args)
             self.assertEqual(results, list(task_args))
             self.assertEqual(len(cache), 1)
-            self.assertEqual(next(iter(cache.keys())), CustomTaskBear)
+            self.assertEqual(next(iter(cache.keys())), CustomTasksBear)
             self.assertEqual(len(next(iter(cache.values()))), 1)
 
             # All following times we have a cache hit (we don't modify the
@@ -746,11 +746,11 @@ class CoreCacheTest(CoreTestBase):
                 mock.assert_not_called()
                 self.assertEqual(results, list(task_args))
                 self.assertEqual(len(cache), 1)
-                self.assertIn(CustomTaskBear, cache)
+                self.assertIn(CustomTasksBear, cache)
                 self.assertEqual(len(next(iter(cache.values()))), 1)
 
         task_args = 500, 11, 12
-        bear = CustomTaskBear(section, filedict, tasks=[task_args])
+        bear = CustomTasksBear(section, filedict, tasks=[task_args])
         with unittest.mock.patch.object(bear, 'analyze',
                                         wraps=bear.analyze) as mock:
             # Invocation with different args should add another cache entry,
@@ -759,7 +759,7 @@ class CoreCacheTest(CoreTestBase):
             mock.assert_called_once_with(*task_args)
             self.assertEqual(results, list(task_args))
             self.assertEqual(len(cache), 1)
-            self.assertIn(CustomTaskBear, cache)
+            self.assertIn(CustomTasksBear, cache)
             self.assertEqual(len(next(iter(cache.values()))), 2)
 
             mock.reset_mock()
@@ -768,7 +768,7 @@ class CoreCacheTest(CoreTestBase):
             mock.assert_not_called()
             self.assertEqual(results, list(task_args))
             self.assertEqual(len(cache), 1)
-            self.assertIn(CustomTaskBear, cache)
+            self.assertIn(CustomTasksBear, cache)
             self.assertEqual(len(next(iter(cache.values()))), 2)
 
     def test_existing_cache_with_unrelated_data(self):
@@ -777,10 +777,10 @@ class CoreCacheTest(CoreTestBase):
 
         # Start with some unrelated cache values. Those are ignored as they are
         # never hit during a cache lookup.
-        cache = {CustomTaskBear: {b'123456': [100, 101, 102]}}
+        cache = {CustomTasksBear: {b'123456': [100, 101, 102]}}
 
         task_args = -1, -2, -3
-        bear = CustomTaskBear(section, filedict, tasks=[task_args])
+        bear = CustomTasksBear(section, filedict, tasks=[task_args])
 
         with unittest.mock.patch.object(bear, 'analyze',
                                         wraps=bear.analyze) as mock:
@@ -789,7 +789,7 @@ class CoreCacheTest(CoreTestBase):
             mock.assert_called_once_with(*task_args)
             self.assertEqual(results, list(task_args))
             self.assertEqual(len(cache), 1)
-            self.assertIn(CustomTaskBear, cache)
+            self.assertIn(CustomTasksBear, cache)
 
             cache_values = next(iter(cache.values()))
             self.assertEqual(len(cache_values), 2)
